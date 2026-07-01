@@ -12,10 +12,10 @@ export function Navbar() {
         </Link>
         
         <div className="hidden md:flex gap-6 items-center text-sm font-medium text-neutral-600">
-          <Link href="/startups" className="hover:text-black transition-colors">Startups</Link>
+          <Link href="/startup-idea" className="hover:text-black transition-colors">Startups</Link>
           <Link href="/programs" className="hover:text-black transition-colors">Programs</Link>
           <Link href="/events" className="hover:text-black transition-colors">Events</Link>
-          <Link href="/mentors" className="hover:text-black transition-colors">Mentors</Link>
+          <Link href="/mentorship" className="hover:text-black transition-colors">Mentors</Link>
           <Link href="/component-request" className="hover:text-black transition-colors text-orange-600">Components</Link>
         </div>
 
@@ -23,9 +23,11 @@ export function Navbar() {
           <Button variant="outline" className="hidden md:flex rounded-full border-neutral-200">
             Login
           </Button>
-          <Button className="rounded-full bg-orange-600 hover:bg-orange-700 text-white shadow-sm">
-            Join EDIC
-          </Button>
+          <Link href="/join">
+            <Button className="rounded-full bg-orange-600 hover:bg-orange-700 text-white shadow-sm">
+              Join EDIC
+            </Button>
+          </Link>
         </div>
       </div>
     </nav>
