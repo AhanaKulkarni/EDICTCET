@@ -20,9 +20,8 @@ export default function LoginPage() {
     
     try {
       if (!auth) {
-        // Mock authentication for preview/testing if Firebase keys are missing
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        router.push("/");
+        setError("Firebase is not configured. Please add your Firebase API keys to your Environment Variables (.env.local) to enable Google Login.");
+        setIsLoading(false);
         return;
       }
 
