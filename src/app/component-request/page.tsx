@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { submitComponentRequest, ComponentRequestState } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,15 +16,9 @@ import {
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { Cpu, ArrowDown, Package, Truck, CheckCircle2 } from "lucide-react";
-
-const DEPARTMENTS = [
-  "AI and DS",
-  "Computer Engineering",
-  "Information Technology",
-  "Civil Engineering",
-  "Mechanical Engineering",
-  "Electronics and Telecommunication"
-];
+import { DEPARTMENT_COMPONENTS, DEPARTMENTS } from "@/lib/components-data";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 const initialState: ComponentRequestState = {
   message: "",
@@ -34,6 +28,80 @@ const initialState: ComponentRequestState = {
 
 export default function ComponentRequestPage() {
   const [state, formAction, pending] = useActionState(submitComponentRequest, initialState);
+  const [selectedDept, setSelectedDept] = useState<string>("");
+
+  useEffect(() => {
+    if (state.success && state.data) {
+      generatePDF(state.data);
+    }
+  }, [state]);
+
+  const generatePDF = (data: any) => {
+    const doc = new jsPDF();
+    
+    // Header
+    doc.setFontSize(22);
+    doc.setFont("helvetica", "bold");
+    doc.text("EDIC TCET", 105, 20, { align: "center" });
+    
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "normal");
+    doc.text("Component Procurement Form", 105, 30, { align: "center" });
+    
+    doc.setLineWidth(0.5);
+    doc.line(20, 35, 190, 35);
+    
+    // Application Details
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text("Project & Applicant Details", 20, 45);
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(`Primary Applicant: ${data.studentName}`, 20, 55);
+    doc.text(`Email: ${data.studentEmail}`, 20, 62);
+    doc.text(`Team Members: ${data.teamMembers || "N/A"}`, 20, 69);
+    doc.text(`Project Guide: ${data.projectGuide}`, 20, 76);
+    doc.text(`Requesting Department: ${data.requestingDept}`, 20, 83);
+    doc.text(`Date of Request: ${data.date}`, 20, 90);
+
+    // Component Table
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text("Requested Components", 20, 105);
+    
+    // @ts-ignore
+    doc.autoTable({
+      startY: 110,
+      head: [["Sr No.", "Component Name", "Procuring Department", "Quantity"]],
+      body: [
+        ["1", data.selectedComponent, data.fulfillingDept, data.quantity],
+      ],
+      theme: "grid",
+      headStyles: { fillColor: [220, 38, 38] }
+    });
+
+    // Signatures
+    // @ts-ignore
+    const finalY = doc.lastAutoTable.finalY || 140;
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    
+    // Signature Bands
+    doc.text("_________________________", 20, finalY + 40);
+    doc.text("Project Incharge", 30, finalY + 46);
+    doc.text(`(${data.projectGuide})`, 30, finalY + 51);
+
+    doc.text("_________________________", 80, finalY + 40);
+    doc.text("Dept Coordinator", 85, finalY + 46);
+    doc.text(`(${data.fulfillingDept})`, 85, finalY + 51);
+
+    doc.text("_________________________", 145, finalY + 40);
+    doc.text("Dean R&D, TCET", 150, finalY + 46);
+
+    doc.save(`Component_Request_${data.studentName.replace(/\s+/g, '_')}.pdf`);
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -59,7 +127,7 @@ export default function ComponentRequestPage() {
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-600">to build your prototype.</span>
             </h1>
             <p className="text-xl text-neutral-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Request microcontrollers, sensors, and mechanical components from any department in TCET. We handle the cross-departmental logistics.
+              Request high-end R&D equipment from any department in TCET. A PDF quotation will be generated instantly for faculty signatures.
             </p>
             <motion.div 
               animate={{ y: [0, 10, 0] }} 
@@ -72,61 +140,26 @@ export default function ComponentRequestPage() {
         </div>
       </section>
 
-      {/* Process Section */}
-      <section className="py-24 bg-neutral-50/50 border-y border-neutral-100">
-        <div className="container mx-auto px-4 max-w-6xl">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-neutral-900">Procurement Process</h2>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            {[
-              { title: "Submit Request", desc: "Select what you need and from which department.", icon: Package },
-              { title: "Faculty Approval", desc: "Coordinators from both branches approve the request.", icon: CheckCircle2 },
-              { title: "Collection", desc: "Pick up the components from the respective lab.", icon: Truck }
-            ].map((step, i) => (
-              <motion.div 
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.5 }}
-                className="bg-white p-8 rounded-3xl border border-neutral-100 shadow-sm relative overflow-hidden"
-              >
-                <div className="w-16 h-16 rounded-2xl bg-red-50 text-red-600 mx-auto flex items-center justify-center mb-6">
-                  <step.icon className="w-8 h-8" />
-                </div>
-                <h3 className="text-xl font-bold text-neutral-900 mb-2">{step.title}</h3>
-                <p className="text-neutral-500">{step.desc}</p>
-                <div className="absolute -right-4 -bottom-4 text-[10rem] font-black text-neutral-50 opacity-50 z-0 select-none">
-                  {i+1}
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Form Section */}
-      <section className="py-24 relative">
+      <section className="py-24 relative bg-neutral-50/50">
         <div className="container mx-auto px-4 flex justify-center">
           <motion.div 
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="w-full max-w-2xl"
+            className="w-full max-w-3xl"
           >
             <Card className="w-full bg-white shadow-2xl shadow-red-900/5 border-neutral-100 rounded-[2.5rem] overflow-hidden">
               <div className="h-3 w-full bg-gradient-to-r from-red-500 to-orange-500"></div>
               <CardHeader className="pb-8 pt-10 text-center">
-                <CardTitle className="text-3xl font-bold tracking-tight text-neutral-900">Request Components</CardTitle>
+                <CardTitle className="text-3xl font-bold tracking-tight text-neutral-900">Request Form</CardTitle>
                 <CardDescription className="text-base text-neutral-500 mt-2">
-                  Submit a request for hardware or software components. The request will be automatically routed to the respective EDIC faculty coordinators.
+                  Fill out your project details. You will receive a generated PDF quotation upon submission.
                 </CardDescription>
               </CardHeader>
               <form action={formAction}>
-                <CardContent className="space-y-6 px-10">
+                <CardContent className="space-y-8 px-10">
                   {state?.success && (
                     <div className="p-4 rounded-xl bg-green-50 text-green-700 border border-green-200 font-medium text-center">
                       {state.message}
@@ -138,24 +171,58 @@ export default function ComponentRequestPage() {
                     </div>
                   )}
 
-                  <div className="space-y-2">
-                    <Label htmlFor="userEmail" className="text-neutral-700 font-medium">Your TCET Email</Label>
-                    <Input 
-                      id="userEmail" 
-                      name="userEmail" 
-                      type="email" 
-                      placeholder="firstname.lastname@tcetmumbai.in" 
-                      required 
-                      className="rounded-xl border-neutral-200 bg-neutral-50 h-12"
-                    />
+                  {/* Applicant Details Section */}
+                  <div className="space-y-6">
+                    <h3 className="text-lg font-bold text-neutral-900 border-b pb-2">1. Applicant Details</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="studentName" className="text-neutral-700 font-medium">Full Name</Label>
+                        <Input id="studentName" name="studentName" required className="rounded-xl border-neutral-200 bg-neutral-50 h-12" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="studentEmail" className="text-neutral-700 font-medium">TCET Email</Label>
+                        <Input id="studentEmail" name="studentEmail" type="email" placeholder="@tcetmumbai.in" required className="rounded-xl border-neutral-200 bg-neutral-50 h-12" />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="teamMembers" className="text-neutral-700 font-medium">Other Team Members (Optional)</Label>
+                      <Input id="teamMembers" name="teamMembers" placeholder="John Doe, Jane Smith" className="rounded-xl border-neutral-200 bg-neutral-50 h-12" />
+                    </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Project Details Section */}
+                  <div className="space-y-6">
+                    <h3 className="text-lg font-bold text-neutral-900 border-b pb-2">2. Project Details</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="projectGuide" className="text-neutral-700 font-medium">Project Incharge / Guide</Label>
+                        <Input id="projectGuide" name="projectGuide" required className="rounded-xl border-neutral-200 bg-neutral-50 h-12" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="requestingDept" className="text-neutral-700 font-medium">Your Department</Label>
+                        <Select name="requestingDept" required>
+                          <SelectTrigger className="rounded-xl border-neutral-200 bg-neutral-50 h-12">
+                            <SelectValue placeholder="Select branch" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {DEPARTMENTS.map((dept) => (
+                              <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Component Details Section */}
+                  <div className="space-y-6">
+                    <h3 className="text-lg font-bold text-neutral-900 border-b pb-2">3. Component Selection</h3>
                     <div className="space-y-2">
-                      <Label htmlFor="requestingDept" className="text-neutral-700 font-medium">Your Department (Requesting From)</Label>
-                      <Select name="requestingDept" required>
+                      <Label htmlFor="fulfillingDept" className="text-neutral-700 font-medium">Procuring From (Department)</Label>
+                      <Select name="fulfillingDept" onValueChange={(val: string | null) => setSelectedDept(val || "")} required>
                         <SelectTrigger className="rounded-xl border-neutral-200 bg-neutral-50 h-12">
-                          <SelectValue placeholder="Select branch" />
+                          <SelectValue placeholder="Select branch to view components" />
                         </SelectTrigger>
                         <SelectContent>
                           {DEPARTMENTS.map((dept) => (
@@ -164,43 +231,35 @@ export default function ComponentRequestPage() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="fulfillingDept" className="text-neutral-700 font-medium">Target Department (Procuring From)</Label>
-                      <Select name="fulfillingDept" required>
-                        <SelectTrigger className="rounded-xl border-neutral-200 bg-neutral-50 h-12">
-                          <SelectValue placeholder="Select branch" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {DEPARTMENTS.map((dept) => (
-                            <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="space-y-2 md:col-span-2">
+                        <Label htmlFor="selectedComponent" className="text-neutral-700 font-medium">Component List</Label>
+                        <Select name="selectedComponent" disabled={!selectedDept} required>
+                          <SelectTrigger className="rounded-xl border-neutral-200 bg-neutral-50 h-12">
+                            <SelectValue placeholder={selectedDept ? "Select a component" : "Select a department first"} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {selectedDept && DEPARTMENT_COMPONENTS[selectedDept]?.map((comp) => (
+                              <SelectItem key={comp} value={comp}>{comp}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="quantity" className="text-neutral-700 font-medium">Quantity</Label>
+                        <Input 
+                          id="quantity" 
+                          name="quantity" 
+                          type="number" 
+                          min="1" 
+                          placeholder="1" 
+                          required 
+                          className="rounded-xl border-neutral-200 bg-neutral-50 h-12"
+                        />
+                      </div>
                     </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="components" className="text-neutral-700 font-medium">Component Details</Label>
-                    <Textarea 
-                      id="components" 
-                      name="components" 
-                      placeholder="E.g., 10x Raspberry Pi 4 Model B, 5x Servo Motors..." 
-                      className="rounded-xl border-neutral-200 bg-neutral-50 min-h-[120px] resize-none"
-                      required 
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="quantity" className="text-neutral-700 font-medium">Total Quantity</Label>
-                    <Input 
-                      id="quantity" 
-                      name="quantity" 
-                      type="number" 
-                      min="1" 
-                      placeholder="15" 
-                      required 
-                      className="rounded-xl border-neutral-200 bg-neutral-50 h-12"
-                    />
                   </div>
                 </CardContent>
                 <CardFooter className="pt-6 pb-10 px-10">
@@ -209,7 +268,7 @@ export default function ComponentRequestPage() {
                     disabled={pending} 
                     className="w-full h-14 text-lg rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold transition-all shadow-md"
                   >
-                    {pending ? "Submitting Request..." : "Submit Component Request"}
+                    {pending ? "Generating Quotation..." : "Submit & Generate PDF"}
                   </Button>
                 </CardFooter>
               </form>

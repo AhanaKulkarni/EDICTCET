@@ -1,39 +1,59 @@
 "use server";
 
 export type ComponentRequestState = {
-  message?: string;
-  error?: string;
-  success?: boolean;
+  message: string;
+  error: string;
+  success: boolean;
+  data?: any; // To pass back the data for PDF generation
 };
 
-export async function submitComponentRequest(prevState: ComponentRequestState, formData: FormData): Promise<ComponentRequestState> {
-  const requestingDept = formData.get("requestingDept");
-  const fulfillingDept = formData.get("fulfillingDept");
-  const components = formData.get("components");
-  const quantity = formData.get("quantity");
-  const userEmail = formData.get("userEmail");
+export async function submitComponentRequest(
+  prevState: ComponentRequestState,
+  formData: FormData
+): Promise<ComponentRequestState> {
+  const studentName = formData.get("studentName") as string;
+  const studentEmail = formData.get("studentEmail") as string;
+  const teamMembers = formData.get("teamMembers") as string;
+  const projectGuide = formData.get("projectGuide") as string;
+  const requestingDept = formData.get("requestingDept") as string;
+  const fulfillingDept = formData.get("fulfillingDept") as string;
+  const selectedComponent = formData.get("selectedComponent") as string;
+  const quantity = formData.get("quantity") as string;
 
-  // Validate all fields
-  if (!requestingDept || !fulfillingDept || !components || !quantity || !userEmail) {
-    return { error: "All fields are required." };
+  if (!studentEmail?.endsWith("@tcetmumbai.in")) {
+    return {
+      message: "",
+      error: "Only official @tcetmumbai.in email addresses are permitted.",
+      success: false,
+    };
   }
 
-  // Simulate email routing
-  const subject = `From ${requestingDept} to ${fulfillingDept}`;
-  console.log(`\n--- NEW EMAIL ROUTING ---`);
-  console.log(`Subject: ${subject}`);
-  console.log(`To: EDIC Coordinator (${fulfillingDept})`);
-  console.log(`CC: EDIC Coordinator (${requestingDept})`);
-  console.log(`Body:
-Student Email: ${userEmail}
-Requested Components:
-- Item: ${components}
-- Quantity: ${quantity}
-  `);
-  console.log(`-------------------------\n`);
+  if (!studentName || !projectGuide || !requestingDept || !fulfillingDept || !selectedComponent || !quantity) {
+    return {
+      message: "",
+      error: "Please fill in all required fields.",
+      success: false,
+    };
+  }
 
-  // Fake a slight delay to simulate server processing
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  // Here you would normally save to Firebase / Supabase and trigger emails
+  // For now, we simulate the database save
+  await new Promise((resolve) => setTimeout(resolve, 1500));
 
-  return { success: true, message: `Request successfully routed from ${requestingDept} to ${fulfillingDept}.` };
+  return {
+    message: "Request submitted successfully! Generating your PDF quotation...",
+    error: "",
+    success: true,
+    data: {
+      studentName,
+      studentEmail,
+      teamMembers,
+      projectGuide,
+      requestingDept,
+      fulfillingDept,
+      selectedComponent,
+      quantity,
+      date: new Date().toLocaleDateString(),
+    }
+  };
 }

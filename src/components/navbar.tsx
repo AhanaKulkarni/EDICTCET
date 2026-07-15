@@ -13,16 +13,17 @@ export function Navbar() {
         
         <div className="hidden md:flex gap-6 items-center text-sm font-medium text-neutral-600">
           <Link href="/startup-idea" className="hover:text-black transition-colors">Startups</Link>
-          <Link href="/programs" className="hover:text-black transition-colors">Programs</Link>
-          <Link href="/events" className="hover:text-black transition-colors">Events</Link>
-          <Link href="/mentorship" className="hover:text-black transition-colors">Mentors</Link>
+          <Link href="/resources" className="hover:text-black transition-colors">Resources</Link>
+          <Link href="/slot-booking" className="hover:text-black transition-colors">Mentorship Slots</Link>
           <Link href="/component-request" className="hover:text-black transition-colors text-orange-600">Components</Link>
         </div>
 
         <div className="flex items-center gap-4">
-          <Button variant="outline" className="hidden md:flex rounded-full border-neutral-200">
-            Login
-          </Button>
+          <Link href="/login">
+            <Button variant="outline" className="hidden md:flex rounded-full border-neutral-200">
+              Login
+            </Button>
+          </Link>
           <Link href="/join">
             <Button className="rounded-full bg-orange-600 hover:bg-orange-700 text-white shadow-sm">
               Join EDIC
