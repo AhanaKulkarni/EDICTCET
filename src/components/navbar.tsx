@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { SignInButton, SignUpButton, Show, UserButton } from "@clerk/nextjs";
 
 export function Navbar() {
   return (
@@ -19,16 +20,21 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-4">
-          <Link href="/login">
-            <Button variant="outline" className="hidden md:flex rounded-full border-neutral-200">
-              Login
-            </Button>
-          </Link>
-          <Link href="/join">
-            <Button className="rounded-full bg-orange-600 hover:bg-orange-700 text-white shadow-sm">
-              Join EDIC
-            </Button>
-          </Link>
+          <Show when="signed-out">
+            <SignInButton mode="modal">
+              <Button variant="outline" className="hidden md:flex rounded-full border-neutral-200">
+                Login
+              </Button>
+            </SignInButton>
+            <SignUpButton mode="modal">
+              <Button className="rounded-full bg-orange-600 hover:bg-orange-700 text-white shadow-sm">
+                Join EDIC
+              </Button>
+            </SignUpButton>
+          </Show>
+          <Show when="signed-in">
+            <UserButton />
+          </Show>
         </div>
       </div>
     </nav>
